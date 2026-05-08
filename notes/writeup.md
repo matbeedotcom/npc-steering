@@ -243,6 +243,121 @@ appraisal of driving events shapes affective state and downstream
 decisions — now carries a behavioural signature consistent with
 the moderation literature, not just a citation.
 
+## Empirical anchoring: card vs activation steering
+
+A 2x2 ablation isolates where the architecture's persona-distinctness
+actually comes from - the prompt (the persona card) or the
+activations (the steering offsets). Same scenario × 3 personas × 4
+conditions, with the LLM agent in the loop for all four:
+
+| condition | persona card | activation steering |
+|---|:---:|:---:|
+| `card+steer` (default) | yes | yes |
+| `card_only` | yes | no  |
+| `steer_only` | no  | yes |
+| `neither` | no  | no  |
+
+Two metrics:
+
+- **Felt-VAD distinctness**: mean pairwise L2 across personas on the
+  probe-readback V/A/D per utterance. Measures whether the LLM
+  produces V/A/D-distinct outputs per persona.
+- **State-tracking r(V)**: Pearson correlation between intended V
+  (the symbolic state at utterance time) and felt V (read back from
+  the LLM's hidden state via the same probes used for steering).
+  Measures whether the closed loop actually closes in the shared
+  coordinate system the architecture's central claim depends on.
+
+| condition  | felt-distinctness | state-tracking r(V) |
+|---|---:|---:|
+| `card+steer`  | 0.399 | +0.150 |
+| `card_only`   | 0.382 | **-0.109** |
+| `steer_only`  | 0.398 | **+0.625** |
+| `neither`     | 0.240 |  +0.118 |
+
+The two channels do **different jobs.**
+
+- **The persona card produces felt-VAD distinctness without
+  state-tracking.** With the card alone, the LLM produces utterances
+  that read as clearly distinct across personas - calm-commuter
+  understated, aggressive-late explosive, anxious-new-driver
+  fragmented. But felt-V is *anti-correlated* with the symbolic
+  state's intended V (r = -0.11): the LLM's interpretation of "this
+  character" doesn't track the V/A/D coordinates the symbolic state
+  was conditioned on. The closed loop is *not actually closed* in
+  the prompt-only condition.
+- **Activation steering produces state-tracking without character
+  voice.** With steering alone (and a generic system prompt) the
+  loop closes tightly (r = +0.625, by far the highest of the four)
+  because steering puts the symbolic state directly into the
+  activation subspace the readout projects from. But the output is
+  generic - "I can't feel the hours slipping by while this metal
+  box just inches forward" - because the LLM has no character
+  vocabulary, idiom, or register to anchor to.
+- **Combining them is a tradeoff, not a strict win.** `card+steer`
+  gets the highest felt-distinctness (0.399) but state-tracking
+  drops to r = +0.150. The card's voice anchor pulls felt-V toward
+  the character's vocabulary register, partly fighting the steering's
+  coordinate-system pull. The default configuration trades
+  coordinate-fidelity for voice-fidelity.
+- **Neither is genuinely the floor.** Distinctness collapses to
+  0.240 (a 39% drop) and the LLM produces generic neutral-affect
+  monologue regardless of which persona it is supposed to be running.
+
+The architectural takeaway: **prompts give you voice; steering gives
+you state.** The two channels are complementary, not substitutable;
+they consume different system-design budgets and produce different
+properties.
+
+### Activation steering: good and bad
+
+Going to bat for the steering channel specifically, with the
+ablation as the empirical anchor.
+
+**Good:**
+
+- *Coordinate-system alignment.* Steering writes the symbolic state
+  directly into the same activation subspace the readback probes
+  project from. The `steer_only` r(V) = +0.625 shows this is the
+  channel that actually closes the loop. Without steering, the loop
+  is open: the LLM is doing its own thing in a coordinate system the
+  symbolic state can't see.
+- *Continuous dial, not discrete bins.* Steering accepts α ∈ R; one
+  can dial `state.valence` from -1 to +1 continuously and the
+  projection moves continuously. Prompt-as-state-description forces
+  discretisation ("noticeably frustrated" vs "seething") via the
+  binned `state_to_description()`.
+- *Token cost.* A persona card adds ~300-500 tokens per turn at
+  prefill. Steering is one vector add per turn at one layer.
+- *State authority by construction.* With prompts the LLM's
+  *interpretation* of the prompt is authoritative; with steering the
+  symbolic state is authoritative because its V/A/D coordinates land
+  directly in the activation manifold.
+
+**Bad:**
+
+- *No voice anchor.* Steering alone produces in-coordinate but
+  generic output. Character-specific vocabulary, register, and
+  idioms need the prompt; steering can't reproduce them on its own.
+- *Per-model calibration cost.* Probe extraction, layer selection,
+  gain tuning are all model-specific. Prompts are zero-cost on the
+  calibration side.
+- *Coherence cliff at high \|α\|.* Past roughly \|α\| = 50 outputs
+  collapse into n-gram repetition or syntax breaks. Usable range
+  here is \|α\| <= 25 (`g = 25.0` in `lib/probes.py`); above that
+  the steering becomes louder than the model's coherence prior.
+
+The current default (`card+steer`) reflects this synthesis: keep
+both channels on, accept the state-tracking precision cost as the
+price of voice-faithfulness, and expose `use_card` / `use_steering`
+kwargs on `SteeredAgent.respond()` and `run_scenario()` so a
+downstream consumer with different priorities can flip the flags.
+The full per-condition felt-V trajectory comparison lives at
+[`artifacts/card_vs_steering_felt_mixed_emotions.png`](../artifacts/card_vs_steering_felt_mixed_emotions.png);
+the report at
+[`notes/card_vs_steering_ablation.md`](card_vs_steering_ablation.md)
+breaks the result down per persona.
+
 ## A productive negative result: LLM-prior decay calibration fails
 
 Same methodology as the appraisal calibration was applied to the
