@@ -1,0 +1,45 @@
+{
+  "name": "late_school_run",
+  "description": "Parent late dropping a child off at school. Stuck in traffic, gets cut off, faces a tight merge gap. The canonical demo scenario.",
+  "duration_s": 60.0,
+  "context": {
+    "time_of_day": "08:15",
+    "weather": "clear",
+    "passenger": "child"
+  },
+  "events": [
+    {
+      "t": 0.0,
+      "type": "late_for_appointment",
+      "minutes_behind": 8.0,
+      "importance": 0.9
+    },
+    {
+      "t": 3.0,
+      "type": "traffic_congestion",
+      "duration_s": 30.0
+    },
+    {
+      "t": 12.0,
+      "type": "cut_off",
+      "severity": 0.7,
+      "relative_speed": -8.5
+    },
+    {
+      "t": 16.0,
+      "type": "passenger_comment",
+      "valence": -0.4,
+      "intensity": 0.6
+    },
+    {
+      "t": 20.0,
+      "type": "merge_opportunity",
+      "gap_seconds": 2.0
+    },
+    {
+      "t": 35.0,
+      "type": "red_light",
+      "expected_wait_s": 25.0
+    }
+  ]
+}

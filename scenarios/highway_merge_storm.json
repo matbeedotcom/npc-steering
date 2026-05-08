@@ -1,0 +1,20 @@
+{
+  "name": "highway_merge_storm",
+  "description": "Evening rush, sudden rain, multiple aggressive merges. Tests state under sustained pressure: the persona spread should *widen* over the 90-second arc as frustration and stress accumulate. The clear-up at t=70s lets us see persona-dependent recovery rates.",
+  "duration_s": 90.0,
+  "context": {
+    "time_of_day": "17:30",
+    "weather": "rain",
+    "passenger": "alone"
+  },
+  "events": [
+    {"t": 0.0,  "type": "weather_change",    "condition": "rain",  "intensity": 0.7},
+    {"t": 2.0,  "type": "traffic_congestion","duration_s": 60.0},
+    {"t": 15.0, "type": "cut_off",           "severity": 0.6, "relative_speed": -3.5},
+    {"t": 28.0, "type": "near_miss",         "severity": 0.8, "ttc_s": 0.9},
+    {"t": 42.0, "type": "cut_off",           "severity": 0.85, "relative_speed": -10.0},
+    {"t": 55.0, "type": "merge_opportunity", "gap_seconds": 1.5},
+    {"t": 70.0, "type": "weather_change",    "condition": "clear", "intensity": 0.0},
+    {"t": 82.0, "type": "merge_opportunity", "gap_seconds": 3.0}
+  ]
+}

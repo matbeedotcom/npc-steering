@@ -1,0 +1,36 @@
+[project]
+name = "driver-affect-sim"
+version = "0.1.0"
+description = "Persona-driven driver affect simulator for AV scenario generation."
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+mlx = [
+  # MLX path: probe extraction and steering on Apple Silicon. The
+  # default model is mlx-community/Qwen3.5-9B-MLX-4bit; any MLX-format
+  # decoder LLM with `model.layers[i]` accessible should work.
+  "mlx>=0.30",
+  "mlx-lm>=0.30",
+  "numpy>=1.26",
+]
+sim = [
+  # 02_drive_in_sim.py (Phase D stretch). highway-env is the cheapest
+  # gym-style driving sim with merge scenarios out of the box.
+  "highway-env>=1.10",
+  "gymnasium>=0.29",
+  "numpy>=1.26",
+]
+viz = [
+  "matplotlib>=3.8",
+  "numpy>=1.26",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["lib*"]

@@ -1,0 +1,37 @@
+# Trace outputs and calibration logs — regenerable from scripts/.
+runs/
+
+# Python build / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Environments
+.venv/
+.env
+venv/
+
+# Backups / scratch
+*.bak
+*.tmp
+*~

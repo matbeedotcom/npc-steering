@@ -1,0 +1,19 @@
+{
+  "name": "mixed_emotions",
+  "description": "Same late-school-run pressure, but with two positive moments injected: at t=14s (right after the cut-off) another driver lets the ego in with a friendly wave, and at t=42s a polite, patient overtake. Designed to make the closed loop visibly REVERSE direction at the courtesy events — V should swing up, frustration should drop. Tests whether the persona spread holds across both polarities of affect.",
+  "duration_s": 60.0,
+  "context": {
+    "time_of_day": "08:15",
+    "weather": "clear",
+    "passenger": "child"
+  },
+  "events": [
+    {"t":  0.0, "type": "late_for_appointment",  "minutes_behind": 8.0, "importance": 0.9},
+    {"t":  3.0, "type": "traffic_congestion",    "duration_s": 30.0},
+    {"t": 12.0, "type": "cut_off",               "severity": 0.7, "relative_speed": -8.5},
+    {"t": 14.0, "type": "courtesy_gesture",      "gesture": "let_merge", "intensity": 0.8, "discretionary": 0.9},
+    {"t": 25.0, "type": "passenger_comment",     "valence": -0.3, "intensity": 0.5},
+    {"t": 42.0, "type": "courtesy_gesture",      "gesture": "polite_pass", "intensity": 0.5, "discretionary": 0.6},
+    {"t": 55.0, "type": "merge_opportunity",     "gap_seconds": 2.5}
+  ]
+}

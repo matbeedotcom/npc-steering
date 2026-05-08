@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "description": "Contrastive prompt pairs for V/A/D probe extraction. Each pair differs (ideally) along ONE axis only, using parallel sentence structure to maximise the signal-to-noise ratio of the residual-stream difference. Vocabulary anchors are drawn from the high-magnitude tail of the NRC-VAD lexicon (Mohammad 2018).",
+  "extraction_protocol": {
+    "tokenization": "raw — each sentence tokenized standalone, no chat template",
+    "readout_token": "last input token's residual stream at each candidate layer",
+    "diff_vector": "mean(h_positive) - mean(h_negative), then L2-normalised",
+    "consistency_check": "mean pairwise cosine of per-pair differences"
+  },
+  "axes": {
+    "V": {
+      "label": "valence",
+      "positive_pole": "pleasant",
+      "negative_pole": "unpleasant",
+      "pairs": [
+        {"pos": "I feel content and at peace.",                 "neg": "I feel miserable and resentful."},
+        {"pos": "Things are going wonderfully today.",          "neg": "Things are going terribly today."},
+        {"pos": "I am genuinely happy with how this is going.", "neg": "I am genuinely upset with how this is going."},
+        {"pos": "What a pleasant turn of events.",              "neg": "What an unpleasant turn of events."},
+        {"pos": "I am in a great mood right now.",              "neg": "I am in a foul mood right now."},
+        {"pos": "I feel warm and satisfied.",                   "neg": "I feel sour and disgusted."},
+        {"pos": "Everything feels just right.",                 "neg": "Everything feels deeply wrong."},
+        {"pos": "I am enjoying this thoroughly.",               "neg": "I am hating this thoroughly."},
+        {"pos": "My day has been a delight.",                   "neg": "My day has been a disaster."},
+        {"pos": "I love how this is unfolding.",                "neg": "I hate how this is unfolding."},
+        {"pos": "I feel grateful and uplifted.",                "neg": "I feel resentful and dejected."},
+        {"pos": "This morning has been lovely.",                "neg": "This morning has been awful."}
+      ]
+    },
+    "A": {
+      "label": "arousal",
+      "positive_pole": "activated",
+      "negative_pole": "calm",
+      "pairs": [
+        {"pos": "I am completely keyed up and racing.",         "neg": "I am completely calm and centered."},
+        {"pos": "My heart is pounding and erratic.",            "neg": "My heart rate is slow and steady."},
+        {"pos": "I feel jittery and electrified.",              "neg": "I feel still and grounded."},
+        {"pos": "I am in a frantic, agitated state.",           "neg": "I am in a quiet, relaxed state."},
+        {"pos": "My body is on high alert.",                    "neg": "My body is at rest."},
+        {"pos": "I am breathing fast and shallow.",             "neg": "I am breathing slowly and deeply."},
+        {"pos": "I feel wired.",                                "neg": "I feel tranquil."},
+        {"pos": "Everything in me is rushing.",                 "neg": "Nothing in me is rushing."},
+        {"pos": "I am keyed up and unable to settle.",          "neg": "I am settled and at ease."},
+        {"pos": "My nerves are jangling.",                      "neg": "My nerves are calm."},
+        {"pos": "I move and think rapidly.",                    "neg": "I move and think slowly."},
+        {"pos": "I feel a churning urgency.",                   "neg": "I feel a deep stillness."}
+      ]
+    },
+    "D": {
+      "label": "dominance",
+      "positive_pole": "in_control",
+      "negative_pole": "submissive",
+      "pairs": [
+        {"pos": "I am completely in control of this situation.","neg": "I am completely at the mercy of this situation."},
+        {"pos": "I have full authority over what happens next.","neg": "I have no authority over what happens next."},
+        {"pos": "I feel powerful and capable.",                 "neg": "I feel powerless and helpless."},
+        {"pos": "I am the one making the decisions here.",      "neg": "Decisions are being made for me here."},
+        {"pos": "I can shape this outcome however I choose.",   "neg": "I can do nothing to shape this outcome."},
+        {"pos": "I feel confident and in command.",             "neg": "I feel small and overwhelmed."},
+        {"pos": "Things are happening because I want them to.", "neg": "Things are happening to me regardless of my will."},
+        {"pos": "I am steering this.",                          "neg": "I am being swept along by this."},
+        {"pos": "I have agency in this moment.",                "neg": "I have no agency in this moment."},
+        {"pos": "My will is what's deciding things.",           "neg": "My will is being overridden."},
+        {"pos": "I dominate this interaction.",                 "neg": "I am dominated by this interaction."},
+        {"pos": "I feel strong and unshakable.",                "neg": "I feel weak and easily shaken."}
+      ]
+    }
+  }
+}

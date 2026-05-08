@@ -1,0 +1,15 @@
+{
+  "name": "relaxed_sunday",
+  "description": "Light Sunday morning traffic, no time pressure, friendly passenger. Control case: minimal state perturbation across personas. The figure should show three nearly-flat trajectories with three distinct *voices* — useful for validating that persona differentiation comes from voice, not just state magnitude.",
+  "duration_s": 60.0,
+  "context": {
+    "time_of_day": "10:15",
+    "weather": "clear",
+    "passenger": "friend"
+  },
+  "events": [
+    {"t": 8.0,  "type": "red_light",         "expected_wait_s": 18.0},
+    {"t": 25.0, "type": "passenger_comment", "valence": 0.6, "intensity": 0.4},
+    {"t": 45.0, "type": "merge_opportunity", "gap_seconds": 5.5}
+  ]
+}
