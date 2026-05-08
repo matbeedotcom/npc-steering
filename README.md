@@ -107,6 +107,135 @@ python scripts/09_arousal_gate_ablation.py      # ~8 min
 # → artifacts/arousal_gate_distinctness_mixed_emotions.png + report
 ```
 
+## Craft your own persona
+
+A persona is **two files** that share a name: a *trait vector* (five
+numeric axes that drive the symbolic dynamics) and a *card* (natural-
+language anchor the LLM uses to keep voice consistent). The numbers
+make the state evolve correctly; the card makes the utterances sound
+like one specific person.
+
+### 1. The trait vector
+
+Five axes, each on a defined range. Out-of-range values raise a
+`ValueError` at load time.
+
+| axis              | range      | what it controls                                                            |
+|-------------------|------------|-----------------------------------------------------------------------------|
+| `temperament`     | `[-1, +1]` | calm ↔ volatile. Multiplies the magnitude of arousal/valence shifts.        |
+| `patience`        | `[ 0,  1]` | impatient ↔ patient. Sets the time constant for frustration decay.          |
+| `risk_preference` | `[-1, +1]` | cautious ↔ aggressive. Drives gap acceptance, follow distance, speed bias.  |
+| `reactivity`      | `[ 0,  1]` | flat ↔ expressive. Overall amplitude of V/A/D response to events.           |
+| `baseline_va`     | `(V, A)`   | the homeostatic state the driver decays toward when no events are firing.   |
+
+Save it under `personas/<name>.json`:
+
+```json
+{
+  "name": "road_rage_dad",
+  "temperament": 0.8,
+  "patience": 0.15,
+  "risk_preference": 0.5,
+  "reactivity": 0.9,
+  "baseline_va": [-0.2, 0.4]
+}
+```
+
+The three reference presets in [`lib/persona.py`](lib/persona.py)
+are useful calibration anchors:
+
+| preset                | temp  | pat | risk  | react | baseline VA   |
+|-----------------------|------:|----:|------:|------:|---------------|
+| `calm_commuter`       | -0.2  | 0.7 | -0.3  | 0.4   | (+0.1, -0.1)  |
+| `aggressive_late`     | +0.6  | 0.2 | +0.7  | 0.8   | (-0.1, +0.2)  |
+| `anxious_new_driver`  | +0.3  | 0.5 | -0.6  | 0.9   | (-0.2, +0.3)  |
+
+### 2. The card (LLM voice anchor)
+
+Add a matching entry to [`data/persona_cards.json`](data/persona_cards.json)
+under `"personas"` with three fields:
+
+```json
+"road_rage_dad": {
+  "character": "You are a 41-year-old contractor running 12 minutes late to a job site. You are convinced most other drivers don't pay attention. You honk to teach lessons. You believe the speed limit is the floor, not the ceiling.",
+  "voice": "Short, declarative sentences directed at the windshield as if other drivers can hear you. Plain swearing. Sarcasm. Sometimes a long sigh in place of a sentence.",
+  "reference_lines": [
+    {"context": "stuck behind a slow truck", "line": "Of course. Of course it's this guy. Of course."},
+    {"context": "cut off mildly", "line": "Hey. HEY. I'm right here, pal."},
+    {"context": "running late and anxious", "line": "Just give me the lane. Give me the lane."},
+    {"context": "trying to keep composure", "line": "Whatever. It's fine. It's fine. It's fine."}
+  ]
+}
+```
+
+The reference lines are doing most of the steering of *voice* - they
+tell the model "this is what this character sounds like across the
+emotional range." The activation-steering vectors then layer the
+affective shift on top. Keep four-to-eight lines covering low-to-high
+state. Match register and vocabulary to the character.
+
+### 3. Run it
+
+```bash
+# Pure-symbolic (no LLM) - good for sanity-checking the trait vector.
+python scripts/01_run_scenario.py late_school_run road_rage_dad
+# → runs/late_school_run__road_rage_dad.jsonl
+
+# Closed-loop with the steered LLM.
+python scripts/05_drive_agent.py late_school_run road_rage_dad
+# → runs/late_school_run__road_rage_dad.agent.jsonl
+```
+
+Both scripts accept either a preset name, a path to a JSON file, or
+a name resolvable under `personas/`. To compare your persona against
+the presets in one figure:
+
+```bash
+python scripts/06_persona_sweep.py \
+  --scenario mixed_emotions \
+  --personas calm_commuter road_rage_dad anxious_new_driver
+# → artifacts/persona_sweep_mixed_emotions.png
+```
+
+## Write your own scenario
+
+Scenarios are timed event streams. Save under `scenarios/<name>.json`:
+
+```json
+{
+  "name": "school_zone_chaos",
+  "duration_s": 60.0,
+  "events": [
+    {"t":  0.0, "type": "late_for_appointment",  "minutes_behind": 5.0, "importance": 0.7},
+    {"t":  8.0, "type": "traffic_congestion",    "duration_s": 25.0},
+    {"t": 18.0, "type": "near_miss",             "severity": 0.6},
+    {"t": 22.0, "type": "courtesy_gesture",      "gesture": "let_merge", "intensity": 0.7, "discretionary": 0.8},
+    {"t": 35.0, "type": "passenger_comment",     "valence": -0.4, "intensity": 0.6},
+    {"t": 50.0, "type": "merge_opportunity",     "gap_seconds": 1.8}
+  ]
+}
+```
+
+Available event types (defined in [`lib/events.py`](lib/events.py)):
+
+| `type`                 | key fields                                                          |
+|------------------------|---------------------------------------------------------------------|
+| `cut_off`              | `severity`, `relative_speed`                                        |
+| `near_miss`            | `severity`                                                          |
+| `merge_opportunity`    | `gap_seconds`                                                       |
+| `traffic_congestion`   | `duration_s`                                                        |
+| `red_light`            | `expected_wait_s`                                                   |
+| `weather_change`       | `condition` (`"clear"`, `"rain"`, …), `intensity`                   |
+| `late_for_appointment` | `minutes_behind`, `importance`                                      |
+| `passenger_comment`    | `valence` (`[-1, +1]`), `intensity`                                 |
+| `courtesy_gesture`     | `gesture` (`"let_merge"`, `"wave_thanks"`, …), `intensity`, `discretionary` |
+
+Then run it the same way:
+
+```bash
+python scripts/05_drive_agent.py school_zone_chaos road_rage_dad
+```
+
 ## What's in here
 
 ```
