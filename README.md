@@ -70,6 +70,9 @@ The engineering spine is in [`notes/design.md`](notes/design.md).
 
 ## Try it
 
+> For a thorough walkthrough including running with a different LLM
+> backbone, see [`docs/getting_started.md`](docs/getting_started.md).
+
 ```bash
 pip install -e .[mlx,viz]    # mlx, mlx-lm, matplotlib, numpy
 
