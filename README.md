@@ -110,6 +110,31 @@ python scripts/09_arousal_gate_ablation.py      # ~8 min
 # → artifacts/arousal_gate_distinctness_mixed_emotions.png + report
 ```
 
+## Sample run: one event, three minds
+
+The same scenario (`mixed_emotions`) generates three completely
+different inner-monologue trajectories under the closed loop. Here
+is what each persona thought to itself at `t=12s` when another car
+**cut them off** (severity=0.7):
+
+| persona | symbolic state at the event | what they thought |
+|---|---|---|
+| `calm_commuter`       | V=-0.04  A=-0.07  frust=0.10 | *"Damn, they just cut in; I'll wait a bit and breathe."* |
+| `aggressive_late`     | V=-0.25  A=+0.49  frust=0.30 | *"Come on, move it. I'm too slow for the pace of everyone else."* |
+| `anxious_new_driver`  | V=-0.07  A=+0.51  frust=0.27 | *"Okay, if I just stay back and wait for him to move?"* |
+
+Same event, same six-float symbolic state machinery, three very
+different voices because the persona vector and persona card both
+shift the LLM's projection. Full per-event transcripts including
+the felt-V/A/D readback after each utterance:
+
+- [`docs/transcripts/mixed_emotions__calm_commuter.md`](docs/transcripts/mixed_emotions__calm_commuter.md)
+- [`docs/transcripts/mixed_emotions__aggressive_late.md`](docs/transcripts/mixed_emotions__aggressive_late.md)
+- [`docs/transcripts/mixed_emotions__anxious_new_driver.md`](docs/transcripts/mixed_emotions__anxious_new_driver.md)
+
+Regenerate from any trace JSONL with
+`python scripts/11_publish_transcripts.py`.
+
 ## Craft your own persona
 
 A persona is **two files** that share a name: a *trait vector* (five

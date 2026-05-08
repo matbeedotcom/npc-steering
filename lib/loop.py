@@ -42,6 +42,8 @@ def run_scenario(
     dt: float = 0.1,
     state_log_every_n_ticks: int = 5,
     arousal_gate: bool = False,
+    use_card: bool = True,
+    use_steering: bool = True,
 ) -> None:
     """Run a scenario end-to-end and write a JSONL trace.
 
@@ -49,6 +51,10 @@ def run_scenario(
     `agent=None` skips the LLM branch — useful for quick symbolic-only runs.
     `arousal_gate=True` activates the Shangguan 2025 high-arousal
     amplifier in the appraisal layer.
+    `use_card` / `use_steering` toggle the persona-card system prompt
+    and the activation-steering offsets respectively. Used by the
+    card-vs-steering ablation in
+    `scripts/10_card_vs_steering_ablation.py`.
     """
     events = sorted(parse_events(scenario["events"]), key=lambda e: e.t)
     duration = float(scenario.get("duration_s", 60.0))
@@ -81,7 +87,11 @@ def run_scenario(
 
                 # 2-3. Closed loop (only if agent provided).
                 if agent is not None:
-                    response = agent.respond(state, persona, ev)
+                    response = agent.respond(
+                        state, persona, ev,
+                        use_card=use_card,
+                        use_steering=use_steering,
+                    )
                     trace.utterance(ev.t, response.text, felt_vad=response.felt_VAD)
                     state.apply(response.delta_state)
                     # Re-log state post-re-appraisal so the trace shows

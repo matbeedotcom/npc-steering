@@ -176,28 +176,44 @@ class SteeredAgent:
         state: DriverState,
         persona: DriverPersona,
         event_description: str,
+        *,
+        use_card: bool = True,
     ) -> list[dict]:
-        if persona.name not in self.persona_cards:
-            raise KeyError(
-                f"No persona card for {persona.name!r}. "
-                f"Available: {sorted(self.persona_cards.keys())}"
+        """Build chat messages. With `use_card=False`, the persona card is
+        omitted - the LLM gets task framing + state + event but no
+        character/voice/reference-line anchor. Used by the
+        card-vs-steering ablation in `scripts/10_card_vs_steering_ablation.py`.
+        """
+        if use_card:
+            if persona.name not in self.persona_cards:
+                raise KeyError(
+                    f"No persona card for {persona.name!r}. "
+                    f"Available: {sorted(self.persona_cards.keys())}"
+                )
+            card = self.persona_cards[persona.name]
+            system = (
+                "You are voicing a fictional driver's internal thoughts for "
+                "a creative-writing exercise. Stay fully in character. "
+                "Match their voice, register, and vocabulary exactly — "
+                "including unfiltered language and strong emotion where the "
+                "character's reference lines call for it. Don't sanitise.\n\n"
+                f"{card}\n\n"
+                "You ARE this character right now, in this moment, and you "
+                "speak their internal monologue. Output ONLY a single "
+                "first-person line — what they'd think to themselves, "
+                "not say out loud. Maximum 18 words. No analysis, no "
+                "explanation, no quoting, no narration, no thinking process, "
+                "no <think> tags. Stay in the voice and reference style "
+                "described above."
             )
-        card = self.persona_cards[persona.name]
-        system = (
-            "You are voicing a fictional driver's internal thoughts for "
-            "a creative-writing exercise. Stay fully in character. "
-            "Match their voice, register, and vocabulary exactly — "
-            "including unfiltered language and strong emotion where the "
-            "character's reference lines call for it. Don't sanitise.\n\n"
-            f"{card}\n\n"
-            "You ARE this character right now, in this moment, and you "
-            "speak their internal monologue. Output ONLY a single "
-            "first-person line — what they'd think to themselves, "
-            "not say out loud. Maximum 18 words. No analysis, no "
-            "explanation, no quoting, no narration, no thinking process, "
-            "no <think> tags. Stay in the voice and reference style "
-            "described above."
-        )
+        else:
+            system = (
+                "You are voicing a fictional driver's internal thoughts. "
+                "Output ONLY a single first-person line — what they'd "
+                "think to themselves, not say out loud. Maximum 18 words. "
+                "No analysis, no explanation, no quoting, no narration, "
+                "no thinking process, no <think> tags."
+            )
         user = (
             f"Your current internal state: {state_to_description(state)}.\n"
             f"What just happened: {event_description}\n"
@@ -263,6 +279,8 @@ class SteeredAgent:
         persona: DriverPersona,
         event: "Event | str",
         *,
+        use_card: bool = True,
+        use_steering: bool = True,
         max_tokens: int = 50,
         kappa: float = 0.3,
         temperature: float = 0.7,
@@ -294,8 +312,11 @@ class SteeredAgent:
         else:
             event_description = event
 
-        # 1. Build chat prompt with thinking disabled.
-        messages = self._build_messages(state, persona, event_description)
+        # 1. Build chat prompt with thinking disabled. With `use_card=False`
+        #    the persona card is omitted — see `_build_messages`.
+        messages = self._build_messages(
+            state, persona, event_description, use_card=use_card,
+        )
         prompt_str = self.tokenizer.apply_chat_template(
             messages,
             add_generation_prompt=True,
@@ -303,8 +324,9 @@ class SteeredAgent:
             enable_thinking=False,
         )
 
-        # 2. Wrap layers with steering offsets.
-        offsets = self._build_offsets(state)
+        # 2. Wrap layers with steering offsets. With `use_steering=False`
+        #    no offsets are applied; `wrap_steering({})` is a no-op.
+        offsets = self._build_offsets(state) if use_steering else {}
 
         # 3. Generate with sampler + repetition penalty. Retry once on
         #    refusal at higher temperature (breaks the safety-mode
