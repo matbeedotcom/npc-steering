@@ -108,6 +108,19 @@ python scripts/08_calibrate_decay.py            # ~12 min
 # Table 2 (personality effects amplified only under high arousal).
 python scripts/09_arousal_gate_ablation.py      # ~8 min
 # → artifacts/arousal_gate_distinctness_mixed_emotions.png + report
+
+# Card-vs-steering ablation - 2x2 attribution of where persona
+# distinctness comes from. Headline: prompts give voice; steering
+# gives state. See notes/card_vs_steering_ablation.md.
+python scripts/10_card_vs_steering_ablation.py  # ~8 min
+
+# Cross-modal audit - TTS each utterance, run through
+# matbee/whisper-to-vad ONNX, compare with the probe-based felt_VAD
+# readout. Independent auditor for the closed-loop coordinate-system
+# claim. macOS-only TTS by default.
+pip install -e '.[audit]'
+python scripts/12_audio_audit.py                # ~20-30 min, downloads Whisper-large-v3-turbo
+# → artifacts/audio_audit_scatter.png + notes/audio_audit.md
 ```
 
 ## Sample run: one event, three minds

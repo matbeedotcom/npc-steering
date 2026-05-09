@@ -300,6 +300,56 @@ interesting finding - the closed-loop coupling differs by model.
 
 ---
 
+## Step 11 (optional): cross-modal audit of `felt_VAD`
+
+The closed-loop's coordinate-system claim - that probe-write and
+probe-read live in the same space - is self-confirming when you read
+with the same instrument you wrote with. The audio audit breaks the
+circularity by introducing an independent auditor:
+
+```
+LLM utterance → TTS → 16 kHz WAV
+                       ↓
+                 Whisper-large-v3-turbo encoder (layer -2)
+                       ↓
+                 mean-pool over time → (1, 1280)
+                       ↓
+                 matbee/whisper-to-vad (ONNX)
+                       ↓
+                 audio_VAD ∈ [-1, +1]^3
+                       │
+              compare with felt_VAD from the trace
+```
+
+Setup and run:
+
+```bash
+pip install -e '.[audit]'                # transformers, torch, onnxruntime, soundfile, hf_hub
+python scripts/12_audio_audit.py
+# → artifacts/audio_audit_scatter.png + notes/audio_audit.md
+```
+
+Expect **15-30 min** on first run (Whisper-large-v3-turbo is ~3 GB),
+about **5-10 min** thereafter (model cached). macOS TTS via `say`
+is the default; for other platforms swap `synthesize_speech` in
+`scripts/12_audio_audit.py` for a `coqui-tts` / `pyttsx3` /
+OpenAI-TTS implementation.
+
+The output report includes Pearson `r` per axis (do probe and audio
+move together?), mean absolute disagreement (how far apart in absolute
+terms?), and per-utterance scatter. A high `r` on V and A is the
+strongest cross-modal validation the architecture can produce; a low
+`r` is harder to interpret - either the probes overclaim, the audio
+model misreads synthetic TTS, or the two modalities encode different
+aspects of affect.
+
+**Caveat to flag in any reading**: the audio model was trained on
+human speech (CREMA-D / EmoVoice-DB / JL-Corpus); synthetic TTS sits
+in a different distribution. A v2 with human-recorded audio would
+settle this; the v1 here is suggestive, not definitive.
+
+---
+
 ## Troubleshooting
 
 | symptom | likely cause | fix |

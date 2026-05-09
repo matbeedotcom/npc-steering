@@ -27,6 +27,20 @@ viz = [
   "matplotlib>=3.8",
   "numpy>=1.26",
 ]
+audit = [
+  # Cross-modal audit: TTS each LLM utterance, push through
+  # `matbee/whisper-to-vad` ONNX, compare with the probe-based felt_VAD
+  # readback. See `scripts/12_audio_audit.py`. macOS `say` is the
+  # default TTS (zero-dep); change `synthesize_speech` if running
+  # elsewhere.
+  "huggingface-hub>=0.20",
+  "transformers>=4.40",
+  "torch>=2.2",
+  "onnxruntime>=1.17",
+  "soundfile>=0.12",
+  "numpy>=1.26",
+  "matplotlib>=3.8",
+]
 
 [build-system]
 requires = ["setuptools>=68"]
